@@ -90,4 +90,52 @@ export class EarthquakeDataController {
       next(error);
     }
   }
+
+  /**
+   * Endpoint to list earthquakes with pagination and filtering.
+   *
+   * Query Parameters:
+   * - `pageNum` (number): Page number for pagination (default: 1).
+   * - `pageSize` (number): Number of records per page (default: 10).
+   * - `sort` 排序参数，默认是`occurTime`
+   * - `sortOrder` 默认是降序
+   * - `minMagnitude` (number, optional): Minimum magnitude to filter results.
+   * - `maxMagnitude` (number, optional): Maximum magnitude to filter results.
+   * - `location` (string, optional): Filter by location keyword (case-insensitive).
+   * - 地震发生时间StartRange
+   * - 地震发生时间EndRange
+   */
+  async listEarthquakes(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    console.log(`Endpoint ${req.path} invoked.`);
+    console.log(`Request Query Parameters:`, req.query);
+
+    try {
+      const { page = 1, limit = 10, ...filters } = req.query;
+
+      const pagination = {
+        page: parseInt(page as string, 10),
+        limit: parseInt(limit as string, 10),
+      };
+
+      const result = await this.earthquakeService.getEarthquakes(
+        pagination,
+        filters,
+      );
+
+      const response: APIResponse = {
+        status: 200,
+        success: true,
+        message: "Earthquake data retrieved successfully.",
+        data: result,
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

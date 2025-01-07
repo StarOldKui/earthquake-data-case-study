@@ -1,6 +1,6 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { AttributeType, Table, BillingMode } from "aws-cdk-lib/aws-dynamodb";
+import { AttributeType, BillingMode, Table } from "aws-cdk-lib/aws-dynamodb";
 
 /**
  * Infrastructure stack for provisioning AWS resources.
@@ -14,37 +14,45 @@ export class InfraStack extends cdk.Stack {
 
     /**
      * DynamoDB table for storing earthquake data.
-     * This table is used to store the details of earthquakes, including their occurrence time.
      *
-     * Table schema:
-     * - Partition Key (`id`): Unique identifier for each earthquake (e.g., an earthquake ID).
-     * - Sort Key (`occurTime`): Timestamp of when the earthquake occurred, in milliseconds.
-     * - Billing Mode: Pay-per-request to optimize cost for variable workloads.
-     * - Removal Policy: Destroy the table when the stack is deleted (suitable for non-production environments).
+     * Table Schema:
+     * - Partition Key (`yearMonth`): Represents the year and month of the earthquake occurrence, e.g., "2025-01".
+     * - Sort Key (`occurrenceTimestamp`): The timestamp of when the earthquake occurred.
+     *
+     * Key Considerations:
+     * - Partition Key (`yearMonth`) is designed for grouping data by month to ensure partitions are neither too small nor too large.
+     * - Sort Key (`occurrenceTimestamp`) supports efficient range queries and sorting by time within each partition.
+     * - Use of a numeric timestamp for the sort key minimizes storage size and ensures precision for range queries.
+     *
+     * Additional Features:
+     * - Billing Mode: Pay-per-request to optimize cost for unpredictable or variable workloads.
+     * - Removal Policy: The table will be destroyed when the stack is deleted (suitable for non-production environments).
      */
     const earthquakeTable = new Table(this, "EarthquakeDataTable", {
       tableName: "earthquake-data-dev",
       partitionKey: {
-        name: "id", // Unique identifier for the earthquake
+        name: "yearMonth",
         type: AttributeType.STRING,
       },
       sortKey: {
-        name: "occurTime", // Timestamp of the earthquake occurrence
-        type: AttributeType.STRING,
+        name: "occurrenceTimestamp",
+        type: AttributeType.NUMBER,
       },
-      billingMode: BillingMode.PAY_PER_REQUEST, // on-demand cost
-      removalPolicy: cdk.RemovalPolicy.DESTROY, // Automatically delete table with stack
+      billingMode: BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
     /**
      * DynamoDB table for storing API request logs.
      * This table is used to log metadata about API requests made to interact with the earthquake data.
      *
-     * Table schema:
-     * - Partition Key (`reqId`): Unique identifier for each API request (e.g., UUID or user session ID).
-     * - Sort Key (`reqTimestamp`): Timestamp of when the request was made, in milliseconds.
-     * - Billing Mode: Pay-per-request to handle fluctuating traffic patterns.
-     * - Removal Policy: Destroy the table when the stack is deleted (suitable for non-production environments).
+     * Table Schema:
+     * - Partition Key (`yearMonth`): Represents the year and month of the API request, e.g., "2025-01".
+     * - Sort Key (`reqTimestamp`): The timestamp of when the request was made.
+     *
+     * Additional Features:
+     * - Billing Mode: Pay-per-request to optimize cost for unpredictable or variable workloads.
+     * - Removal Policy: The table will be destroyed when the stack is deleted (suitable for non-production environments).
      */
     const earthquakeAPIRequestLogTable = new Table(
       this,
@@ -52,15 +60,15 @@ export class InfraStack extends cdk.Stack {
       {
         tableName: "earthquake-api-request-log-dev",
         partitionKey: {
-          name: "reqId", // Unique identifier for each API request
+          name: "yearMonth",
           type: AttributeType.STRING,
         },
         sortKey: {
-          name: "reqTimestamp", // Timestamp of the request made
+          name: "reqTimestamp",
           type: AttributeType.NUMBER,
         },
-        billingMode: BillingMode.PAY_PER_REQUEST, // on-demand cost
-        removalPolicy: cdk.RemovalPolicy.DESTROY, // Automatically delete table with stack
+        billingMode: BillingMode.PAY_PER_REQUEST,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
       },
     );
   }

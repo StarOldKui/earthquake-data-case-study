@@ -1,7 +1,7 @@
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import geoip from "geoip-lite";
-import * as moment from "moment-timezone";
+import moment from "moment-timezone";
 import { DynamoDBUtil } from "../utils/DynamoDBUtil";
 import { AppConfig } from "../config/appConfig";
 
@@ -25,7 +25,7 @@ export class RequestMetadataCollectHandler {
   static async logMetadata(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     const startTime = Date.now();
 
@@ -45,7 +45,7 @@ export class RequestMetadataCollectHandler {
     // Hook into the response
     res.on("finish", async () => {
       const executionTimeInSecond = ((Date.now() - startTime) / 1000).toFixed(
-        2
+        2,
       );
 
       const responseData = res.locals.responseData || null;
@@ -65,7 +65,7 @@ export class RequestMetadataCollectHandler {
         // Log metadata storage errors without impacting the API response
         console.error(
           "Failed to store API request log. This does not affect the response:",
-          error
+          error,
         );
       }
     });
@@ -101,9 +101,13 @@ export class RequestMetadataCollectHandler {
       .tz(reqTimestamp, "Australia/Melbourne")
       .format("YYYY-MM-DD HH:mm:ss z"); // Human-readable time in local timezone
 
+    // Calculate `yearMonth` for partition key
+    const yearMonth = moment(reqTimestamp).format("YYYY-MM");
+
     return {
+      yearMonth, // Partition Key: Year and month in "YYYY-MM" format
+      reqTimestamp, // Sort Key: UNIX timestamp in milliseconds
       reqId,
-      reqTimestamp, // UNIX timestamp in milliseconds
       reqReadableTimestampUTC, // UTC time
       reqReadableTimestampLocal, // Local time (specific timezone)
       reqIp, // The IP address from which the request originated
@@ -129,7 +133,7 @@ export class RequestMetadataCollectHandler {
     // Directly call `DynamoDBUtil.putItem` and let the error bubble up
     await DynamoDBUtil.putItem(
       AppConfig.AWS.DynamoDB.Tables.EarthquakeApiRequestLog,
-      completeAPIlog
+      completeAPIlog,
     );
   }
 }

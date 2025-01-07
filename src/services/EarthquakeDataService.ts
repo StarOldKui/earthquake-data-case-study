@@ -2,7 +2,7 @@ import axios from "axios";
 import { AppConfig } from "../config/appConfig";
 import { DynamoDBUtil } from "../utils/DynamoDBUtil";
 import { EarthquakeResponse } from "../models/EarthquakeDataModel";
-import * as moment from "moment-timezone";
+import moment from "moment-timezone";
 
 /**
  * A service class to handle earthquake data operations.
@@ -26,12 +26,18 @@ export class EarthquakeDataService {
       // No additional sorting is necessary as the API guarantees the order
       const earthquakeFeatures = response.data.features
         .slice(0, 100)
-        .map((feature) => ({
-          occurTime: moment
-            .tz(feature.properties.time, "Australia/Melbourne")
-            .format("YYYY-MM-DD HH:mm:ss z"), // Occurrence time (sort key) as Human-readable time in local timezone
-          ...feature, // Add the remaining fields as is, already included the partition key 'id'
-        }));
+        .map((feature) => {
+          // Original timestamp in milliseconds
+          const occurrenceTimestamp = feature.properties.time;
+          // Generate "year-month" partition key
+          const yearMonth = moment(occurrenceTimestamp).format("YYYY-MM");
+
+          return {
+            yearMonth, // Partition Key
+            occurrenceTimestamp, // Sort Key
+            ...feature, // All other properties
+          };
+        });
 
       console.log(`Fetched ${earthquakeFeatures.length} earthquakes`);
 
@@ -46,5 +52,73 @@ export class EarthquakeDataService {
         `Failed to fetch and store earthquake data. Reason: ${(error as Error).message}`,
       );
     }
+  }
+
+  /**
+   * Fetches earthquake data with pagination and filters from the database.
+   *
+   * @param pagination - Pagination details (page and limit).
+   * @param filters - Filters for querying the database.
+   * @returns Filtered and paginated earthquake data.
+   */
+  async getEarthquakes(
+    pagination: { page: number; limit: number },
+    filters: any,
+  ): Promise<any> {
+    const { page, limit } = pagination;
+    const offset = (page - 1) * limit;
+
+    const filterExpression: string[] = [];
+    const expressionAttributeValues: Record<string, any> = {};
+
+    // Add filters for minimum and maximum magnitude
+    if (filters.minMagnitude) {
+      filterExpression.push("properties.mag >= :minMag");
+      expressionAttributeValues[":minMag"] = parseFloat(filters.minMagnitude);
+    }
+
+    if (filters.maxMagnitude) {
+      filterExpression.push("properties.mag <= :maxMag");
+      expressionAttributeValues[":maxMag"] = parseFloat(filters.maxMagnitude);
+    }
+
+    // Add filters for date range
+    if (filters.startDate) {
+      filterExpression.push("occurTime >= :occurDateStart");
+      expressionAttributeValues[":occurDateStart"] = filters.startDate;
+    }
+
+    if (filters.endDate) {
+      filterExpression.push("occurTime <= :occurDateEnd");
+      expressionAttributeValues[":occurDateEnd"] = filters.endDate;
+    }
+
+    // Add filter for location
+    if (filters.location) {
+      filterExpression.push("contains(properties.place, :location)");
+      expressionAttributeValues[":location"] = filters.location;
+    }
+
+    // Build the DynamoDB query
+    const params = {
+      TableName: AppConfig.AWS.DynamoDB.Tables.EarthquakeData,
+      FilterExpression: filterExpression.length
+        ? filterExpression.join(" AND ")
+        : undefined,
+      ExpressionAttributeValues: Object.keys(expressionAttributeValues).length
+        ? expressionAttributeValues
+        : undefined,
+      Limit: limit,
+      ExclusiveStartKey: offset > 0 ? { id: `id-${offset}` } : undefined,
+    };
+
+    // Execute the query
+    const result = await DynamoDBUtil.queryItems(params);
+
+    return {
+      items: result.items,
+      currentPage: page,
+      hasNextPage: !!result.lastEvaluatedKey,
+    };
   }
 }

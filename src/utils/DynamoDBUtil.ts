@@ -1,4 +1,8 @@
-import { BatchWriteCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  BatchWriteCommand,
+  PutCommand,
+  QueryCommand,
+} from "@aws-sdk/lib-dynamodb";
 import { ddbDocClient } from "../config/dynamoDB";
 
 /**
@@ -75,6 +79,20 @@ export class DynamoDBUtil {
         `Failed to batch insert items into DynamoDB table '${tableName}'. Reason: ${
           (error as Error).message
         }`,
+      );
+    }
+  }
+
+  static async queryItems(params: any): Promise<any> {
+    try {
+      const result = await ddbDocClient.send(new QueryCommand(params));
+      return {
+        items: result.Items,
+        lastEvaluatedKey: result.LastEvaluatedKey,
+      };
+    } catch (error) {
+      throw new Error(
+        `Failed to query items. Reason: ${(error as Error).message}`,
       );
     }
   }
