@@ -8,7 +8,11 @@ const earthquakeDataController = new EarthquakeDataController();
  * Define all earthquake-related routes.
  */
 router.get("/fetch-store/mock", (req, res, next) =>
-  earthquakeDataController.mockFetchAndStore(req, res, next)
+  earthquakeDataController.mockFetchAndStore(req, res, next),
+);
+
+router.get("/fetch-store", (req, res, next) =>
+  earthquakeDataController.fetchAndStore(req, res, next),
 );
 
 export default router;

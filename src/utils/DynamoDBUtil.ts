@@ -1,7 +1,5 @@
-import { PutCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
-import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import { BatchWriteCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { ddbDocClient } from "../config/dynamoDB";
-import { NextFunction } from "express";
 
 /**
  * A utility class for interacting with DynamoDB.
@@ -17,7 +15,7 @@ export class DynamoDBUtil {
    */
   static async putItem(
     tableName: string,
-    item: Record<string, any>
+    item: Record<string, any>,
   ): Promise<void> {
     try {
       const params = {
@@ -32,7 +30,51 @@ export class DynamoDBUtil {
       throw new Error(
         `Failed to insert item into DynamoDB table '${tableName}'. Reason: ${
           (error as Error).message
-        }`
+        }`,
+      );
+    }
+  }
+
+  /**
+   * Inserts multiple items into the specified DynamoDB table in a batch operation.
+   *
+   * @param tableName - The name of the DynamoDB table.
+   * @param items - An array of items to insert into the table.
+   * @throws Will throw an error if the operation fails.
+   */
+  static async batchPutItems(
+    tableName: string,
+    items: Record<string, any>[],
+  ): Promise<void> {
+    try {
+      // DynamoDB BatchWrite allows up to 25 items per request
+      const BATCH_SIZE = 25;
+
+      // Split items into chunks of 25
+      for (let i = 0; i < items.length; i += BATCH_SIZE) {
+        const batch = items.slice(i, i + BATCH_SIZE);
+
+        const params = {
+          RequestItems: {
+            [tableName]: batch.map((item) => ({
+              PutRequest: {
+                Item: item,
+              },
+            })),
+          },
+        };
+
+        await ddbDocClient.send(new BatchWriteCommand(params));
+
+        console.log(
+          `Successfully added ${batch.length} items to table: ${tableName}`,
+        );
+      }
+    } catch (error) {
+      throw new Error(
+        `Failed to batch insert items into DynamoDB table '${tableName}'. Reason: ${
+          (error as Error).message
+        }`,
       );
     }
   }

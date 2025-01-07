@@ -15,12 +15,14 @@
     "@types/geoip-lite": "^1.4.4",
     "@types/node": "^22.10.5",
     "nodemon": "^3.1.9",
+    "prettier": "3.4.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.721.0",
     "@aws-sdk/lib-dynamodb": "^3.721.0",
+    "axios": "^1.7.9",
     "express": "^4.21.2",
     "geoip-lite": "^1.4.10",
     "moment-timezone": "^0.5.46"

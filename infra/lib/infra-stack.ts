@@ -30,7 +30,7 @@ export class InfraStack extends cdk.Stack {
       },
       sortKey: {
         name: "occurTime", // Timestamp of the earthquake occurrence
-        type: AttributeType.NUMBER,
+        type: AttributeType.STRING,
       },
       billingMode: BillingMode.PAY_PER_REQUEST, // on-demand cost
       removalPolicy: cdk.RemovalPolicy.DESTROY, // Automatically delete table with stack
@@ -61,7 +61,7 @@ export class InfraStack extends cdk.Stack {
         },
         billingMode: BillingMode.PAY_PER_REQUEST, // on-demand cost
         removalPolicy: cdk.RemovalPolicy.DESTROY, // Automatically delete table with stack
-      }
+      },
     );
   }
 }
