@@ -24,6 +24,7 @@
     "@aws-sdk/lib-dynamodb": "^3.721.0",
     "axios": "^1.7.9",
     "express": "^4.21.2",
+    "express-validator": "^7.2.1",
     "geoip-lite": "^1.4.10",
     "moment-timezone": "^0.5.46"
   }

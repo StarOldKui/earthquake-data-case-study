@@ -2,6 +2,7 @@ import {
   BatchWriteCommand,
   PutCommand,
   QueryCommand,
+  QueryCommandOutput,
 } from "@aws-sdk/lib-dynamodb";
 import { ddbDocClient } from "../config/dynamoDB";
 
@@ -83,13 +84,17 @@ export class DynamoDBUtil {
     }
   }
 
-  static async queryItems(params: any): Promise<any> {
+  /**
+   * Queries items from a DynamoDB table based on the provided parameters.
+   *
+   * @returns A Promise resolving to a `QueryCommandOutput` object, which includes:
+   *   - `Items`: The list of retrieved items.
+   *   - `LastEvaluatedKey`: The key to fetch the next page of results, if any.
+   * @throws Will throw an error if the query operation fails.
+   */
+  static async queryItems(params: any): Promise<QueryCommandOutput> {
     try {
-      const result = await ddbDocClient.send(new QueryCommand(params));
-      return {
-        items: result.Items,
-        lastEvaluatedKey: result.LastEvaluatedKey,
-      };
+      return await ddbDocClient.send(new QueryCommand(params));
     } catch (error) {
       throw new Error(
         `Failed to query items. Reason: ${(error as Error).message}`,

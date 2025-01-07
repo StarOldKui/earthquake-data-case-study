@@ -1,7 +1,8 @@
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 import { APIResponse } from "../models/APIResponse";
 import { EarthquakeDataService } from "../services/EarthquakeDataService";
 import { AppConfig } from "../config/appConfig";
+import { validationResult } from "express-validator";
 
 export class EarthquakeDataController {
   private earthquakeService: EarthquakeDataService;
@@ -64,9 +65,7 @@ export class EarthquakeDataController {
     res: Response,
     next: NextFunction,
   ): Promise<void> {
-    console.log(`Endpoint ${req.path} invoked.`);
-    console.log(`Request Query Parameters:`, req.query);
-    console.log(`Request Body:`, req.body);
+    console.log(`Endpoint ${req.originalUrl} invoked.`);
 
     try {
       const apiUrl = AppConfig.EarthquakeAPI.Url;
@@ -95,41 +94,59 @@ export class EarthquakeDataController {
    * Endpoint to list earthquakes with pagination and filtering.
    *
    * Query Parameters:
-   * - `pageNum` (number): Page number for pagination (default: 1).
-   * - `pageSize` (number): Number of records per page (default: 10).
-   * - `sort` 排序参数，默认是`occurTime`
-   * - `sortOrder` 默认是降序
-   * - `minMagnitude` (number, optional): Minimum magnitude to filter results.
-   * - `maxMagnitude` (number, optional): Maximum magnitude to filter results.
+   * - `pageSize` (number, required): Number of records per page (default: 10). Must be a positive integer no more than 100.
+   * - `sort` (string, required): Sort parameter, either 'occurrenceTimestamp' or 'magnitude'.
+   * - `sortOrder` (string, required): Sort order, either 'asc' (ascending) or 'desc' (descending).
+   * - `occurStartDate` (number, optional): Filter for earthquakes occurring after this timestamp (in milliseconds).
+   * - `occurEndDate` (number, optional): Filter for earthquakes occurring before this timestamp (in milliseconds).
    * - `location` (string, optional): Filter by location keyword (case-insensitive).
-   * - 地震发生时间StartRange
-   * - 地震发生时间EndRange
+   * - `minMagnitude` (number, optional): Minimum magnitude to filter results. Must be non-negative.
+   * - `maxMagnitude` (number, optional): Maximum magnitude to filter results. Must be non-negative.
+   *
+   * Validation:
+   * - Query parameters are validated using `express-validator` in the `EarthquakeDataValidation` class.
+   * - If validation fails, a `400 Bad Request` response is returned with the validation error details.
+   *
+   * @param req - Express Request object.
+   * @param res - Express Response object.
+   * @param next - Express NextFunction for error handling.
    */
   async listEarthquakes(
     req: Request,
     res: Response,
     next: NextFunction,
   ): Promise<void> {
-    console.log(`Endpoint ${req.path} invoked.`);
+    console.log(`Endpoint ${req.originalUrl} invoked.`);
     console.log(`Request Query Parameters:`, req.query);
 
-    try {
-      const { page = 1, limit = 10, ...filters } = req.query;
+    // Validate request parameters
+    const errors = validationResult(req);
+    // If there are validation errors, respond with validation errors
+    if (!errors.isEmpty()) {
+      console.log(`Validation failed. Errors:`, errors.array());
 
-      const pagination = {
-        page: parseInt(page as string, 10),
-        limit: parseInt(limit as string, 10),
+      const response: APIResponse = {
+        status: 400,
+        success: false,
+        message: "Invalid query parameters.",
+        data: errors.array(),
       };
 
-      const result = await this.earthquakeService.getEarthquakes(
-        pagination,
-        filters,
-      );
+      res.status(400).json(response);
+
+      return;
+    }
+
+    // Start processing
+    try {
+      const result = await this.earthquakeService.getEarthquakes(req.query);
 
       const response: APIResponse = {
         status: 200,
         success: true,
-        message: "Earthquake data retrieved successfully.",
+        message: result.items.length
+          ? "Earthquake data retrieved successfully."
+          : "No earthquakes found for the given parameters.",
         data: result,
       };
 

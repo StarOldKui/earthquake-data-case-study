@@ -16,13 +16,8 @@ export class InfraStack extends cdk.Stack {
      * DynamoDB table for storing earthquake data.
      *
      * Table Schema:
-     * - Partition Key (`yearMonth`): Represents the year and month of the earthquake occurrence, e.g., "2025-01".
+     * - Partition Key (`eventType`): Represents the type of seismic event, e.g., "earthquake" or "quarry".
      * - Sort Key (`occurrenceTimestamp`): The timestamp of when the earthquake occurred.
-     *
-     * Key Considerations:
-     * - Partition Key (`yearMonth`) is designed for grouping data by month to ensure partitions are neither too small nor too large.
-     * - Sort Key (`occurrenceTimestamp`) supports efficient range queries and sorting by time within each partition.
-     * - Use of a numeric timestamp for the sort key minimizes storage size and ensures precision for range queries.
      *
      * Additional Features:
      * - Billing Mode: Pay-per-request to optimize cost for unpredictable or variable workloads.
@@ -31,7 +26,7 @@ export class InfraStack extends cdk.Stack {
     const earthquakeTable = new Table(this, "EarthquakeDataTable", {
       tableName: "earthquake-data-dev",
       partitionKey: {
-        name: "yearMonth",
+        name: "eventType",
         type: AttributeType.STRING,
       },
       sortKey: {
@@ -47,7 +42,7 @@ export class InfraStack extends cdk.Stack {
      * This table is used to log metadata about API requests made to interact with the earthquake data.
      *
      * Table Schema:
-     * - Partition Key (`yearMonth`): Represents the year and month of the API request, e.g., "2025-01".
+     * - Partition Key (`endpointName`) ensures logs are grouped by API endpoint for easier tracking and analysis.
      * - Sort Key (`reqTimestamp`): The timestamp of when the request was made.
      *
      * Additional Features:
@@ -60,7 +55,7 @@ export class InfraStack extends cdk.Stack {
       {
         tableName: "earthquake-api-request-log-dev",
         partitionKey: {
-          name: "yearMonth",
+          name: "endpointName",
           type: AttributeType.STRING,
         },
         sortKey: {

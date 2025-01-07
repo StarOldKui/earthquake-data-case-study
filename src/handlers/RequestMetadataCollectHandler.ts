@@ -101,11 +101,11 @@ export class RequestMetadataCollectHandler {
       .tz(reqTimestamp, "Australia/Melbourne")
       .format("YYYY-MM-DD HH:mm:ss z"); // Human-readable time in local timezone
 
-    // Calculate `yearMonth` for partition key
-    const yearMonth = moment(reqTimestamp).format("YYYY-MM");
+    // Set the partition key to the original URL (endpoint name)
+    const endpointName = req.path;
 
     return {
-      yearMonth, // Partition Key: Year and month in "YYYY-MM" format
+      endpointName, // Partition Key: Original URL path of the endpoint
       reqTimestamp, // Sort Key: UNIX timestamp in milliseconds
       reqId,
       reqReadableTimestampUTC, // UTC time

@@ -1,5 +1,6 @@
-import { Router } from "express";
+import { NextFunction, Request, Response, Router } from "express";
 import { EarthquakeDataController } from "../controllers/EarthquakeDataController";
+import { EarthquakeDataValidation } from "../validations/EarthquakeDataValidation";
 
 const router = Router();
 const earthquakeDataController = new EarthquakeDataController();
@@ -19,8 +20,11 @@ router.get("/fetch-store", (req, res, next) =>
 /**
  * Return paginated and filtered earthquake data.
  */
-router.get("/", (req, res, next) =>
-  earthquakeDataController.listEarthquakes(req, res, next),
+router.get(
+  "/",
+  EarthquakeDataValidation.validatelistEarthquakesInput(),
+  (req: Request, res: Response, next: NextFunction) =>
+    earthquakeDataController.listEarthquakes(req, res, next),
 );
 
 export default router;
