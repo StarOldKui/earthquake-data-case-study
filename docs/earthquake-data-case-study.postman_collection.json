@@ -1,0 +1,238 @@
+{
+	"info": {
+		"_postman_id": "48379c88-0eef-4e8e-a9bf-80cbf132b13b",
+		"name": "earthquake-data-case-study",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "40795629"
+	},
+	"item": [
+		{
+			"name": "0. Login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"litecard_admin\",\r\n    \"password\": \"password\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3000/auth/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "1. Test mock endpoint",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImxpdGVjYXJkX2FkbWluIiwiaWF0IjoxNzM2MzI1MTEzLCJleHAiOjE3MzYzMjg3MTN9.spZwwMCAuAN7FDCYp1Txgm-spvn90hw9E7imxstx9S0",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Test-Header",
+						"value": "test-Header-Value",
+						"type": "text"
+					},
+					{
+						"key": "x-forwarded-for",
+						"value": "194.127.105.160",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"testReqBodyKey\": \"testReqBodyValue\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3000/earthquakes-data/fetch-store/mock?testParamKey=testParamValue&test=testVlue",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"earthquakes-data",
+						"fetch-store",
+						"mock"
+					],
+					"query": [
+						{
+							"key": "testParamKey",
+							"value": "testParamValue"
+						},
+						{
+							"key": "test",
+							"value": "testVlue"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "2. Fetch and store",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImxpdGVjYXJkX2FkbWluIiwiaWF0IjoxNzM2MzI1MTEzLCJleHAiOjE3MzYzMjg3MTN9.spZwwMCAuAN7FDCYp1Txgm-spvn90hw9E7imxstx9S0",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/earthquakes-data/fetch-store",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"earthquakes-data",
+						"fetch-store"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3. List earthquakes data",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImxpdGVjYXJkX2FkbWluIiwiaWF0IjoxNzM2MzI1MTEzLCJleHAiOjE3MzYzMjg3MTN9.spZwwMCAuAN7FDCYp1Txgm-spvn90hw9E7imxstx9S0",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/earthquakes-data?pageSize=10&sort=occurrenceTimestamp&sortOrder=desc&occurStartDate=2025-01-08&occurEndDate=2025-01-31&location=2 km NE of Almanor, CA&minMagnitude=2.2&maxMagnitude=2.3",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"earthquakes-data"
+					],
+					"query": [
+						{
+							"key": "pageSize",
+							"value": "10"
+						},
+						{
+							"key": "sort",
+							"value": "occurrenceTimestamp"
+						},
+						{
+							"key": "sortOrder",
+							"value": "desc"
+						},
+						{
+							"key": "lastEvaluatedKey",
+							"value": "{\"occurrenceTimestamp\":1736322262997,\"eventType\":\"earthquake\"}",
+							"disabled": true
+						},
+						{
+							"key": "occurStartDate",
+							"value": "2025-01-08"
+						},
+						{
+							"key": "occurEndDate",
+							"value": "2025-01-31"
+						},
+						{
+							"key": "location",
+							"value": "2 km NE of Almanor, CA"
+						},
+						{
+							"key": "minMagnitude",
+							"value": "2.2"
+						},
+						{
+							"key": "maxMagnitude",
+							"value": "2.3"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "4. Get statistic from API request count",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImxpdGVjYXJkX2FkbWluIiwiaWF0IjoxNzM2MzI1MTEzLCJleHAiOjE3MzYzMjg3MTN9.spZwwMCAuAN7FDCYp1Txgm-spvn90hw9E7imxstx9S0",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/earthquakes-data/statistic/api-request-count?reqDate=2025-01-08",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"earthquakes-data",
+						"statistic",
+						"api-request-count"
+					],
+					"query": [
+						{
+							"key": "reqDate",
+							"value": "2025-01-08"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

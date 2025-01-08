@@ -8,6 +8,19 @@
 The application will integrate this API to fetch earthquake data:
 https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson
 
+# Notice
+
+1. **Project Walkthrough**:
+    - To help you understand the project thoroughly, I have recorded a detailed demo video explaining the entire project
+      workflow.
+    - You can watch the walkthrough on Google
+      Drive: [Project Demo Video](https://drive.google.com/file/d/1Hd-_ulK6aNtsuxZ_RSyhVVI2qKV7xmfb/view?usp=sharing).
+
+2. **Postman API Collection**:
+    - The API endpoints have been exported as a Postman collection for easy testing.
+    - You can find the exported JSON file in the `docs` directory. Simply import it into Postman to start making API
+      calls.
+
 # Features
 
 - Fetch and store the 100 most recent earthquakes.
@@ -29,6 +42,7 @@ https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson
 
 ```plaintext
 .
+├── docs/                   # Contain documentation Files
 ├── contract/               # OpenAPI Specification Files
 ├── dist/                   # Compiled TypeScript Output
 ├── infra/                  # AWS Infrastructure Code (CDK)
@@ -214,19 +228,19 @@ directory:
 Two DynamoDB tables were designed to meet the requirements:
 
 - **`earthquake-data-dev` Table**:
-   - Partition Key: `eventType` (e.g., "earthquake").
-   - Sort Key: `occurrenceTimestamp` (timestamp of the event).
-   - Designed for storing time-series earthquake data, where each event can be categorized and retrieved
-     chronologically.
+    - Partition Key: `eventType` (e.g., "earthquake").
+    - Sort Key: `occurrenceTimestamp` (timestamp of the event).
+    - Designed for storing time-series earthquake data, where each event can be categorized and retrieved
+      chronologically.
 
 - **`earthquake-api-request-log-dev` Table**:
-   - Partition Key: `endpointName` (API endpoint name).
-   - Sort Key: `reqTimestamp` (request timestamp).
-   - Includes a Global Secondary Index (GSI):
-      - Partition Key: `reqDate` (e.g., "YYYY-MM-DD").
-      - Sort Key: `reqTimestamp`.
-      - Purpose: Enables efficient querying of request logs by date for analytics.
-   - Optimized for logging metadata about API requests for monitoring and debugging.
+    - Partition Key: `endpointName` (API endpoint name).
+    - Sort Key: `reqTimestamp` (request timestamp).
+    - Includes a Global Secondary Index (GSI):
+        - Partition Key: `reqDate` (e.g., "YYYY-MM-DD").
+        - Sort Key: `reqTimestamp`.
+        - Purpose: Enables efficient querying of request logs by date for analytics.
+    - Optimized for logging metadata about API requests for monitoring and debugging.
 
 1. **Advantages**:
     - High throughput and scalability, making it suitable for real-time data ingestion and retrieval.
@@ -238,49 +252,63 @@ Two DynamoDB tables were designed to meet the requirements:
     - For example, filtering earthquakes by date, magnitude, and location would require multiple queries or additional
       indexes, which increases complexity and cost.
 
+
 3. **Challenges**:
     - Storing earthquake data in DynamoDB:
-       - Initially, the partition key was designed as `year-month`, which caused inefficiency in querying data
-         across multiple partitions (e.g., retrieving earthquake data for a year required querying 12
-         partitions).
-       - Updated the design to use `eventType` and `occurrenceTimestamp` to simplify cross-partition queries
-         and support filtering.
+        - Initially, the partition key was designed as `year-month`, which caused inefficiency in querying data
+          across multiple partitions (e.g., retrieving earthquake data for a year required querying 12
+          partitions).
+        - Updated the design to use `eventType` and `occurrenceTimestamp` to simplify cross-partition queries
+          and support filtering.
+        - While it is effective for real-time ingestion of earthquake data, it is less efficient for analytical queries
+          or cross-partition pagination.
+        - DynamoDB pagination is limited to within a single partition. And make it vert hard to see if there is a next
+          page.
+        - DynamoDB lacks native support for aggregations, making tasks such as calculating the average magnitude of
+          earthquakes over a month difficult.
+
 
 4. **Why MySQL or Redshift Would Be Better**:
     - MySQL allows complex queries (e.g., filtering, sorting, and aggregations) across large datasets with ease.
     - Redshift provides fast querying and analytical capabilities for large-scale data.
+    - While DynamoDB is excellent for high-throughput, real-time ingestion, its limitations in analytical querying and
+      pagination make it less suitable for storing and analyzing earthquake data. A hybrid approach that combines
+      DynamoDB for real-time ingestion and MySQL or Redshift for querying and analytics would provide the best balance
+      between performance and flexibility.
 
 ## System Scalability and Performance Optimization
 
 To handle high traffic scenarios (500 requests per second):
 
 1. **Containerization with Docker**:
-   - Package the application as a **Docker image** to ensure portability and consistency across environments.
-   - Use the existing Node.js application (`npm start`) as the entry point in the Docker container.
-   - Store the Docker image in a container registry (e.g., Amazon Elastic Container Registry, ECR).
+    - Package the application as a **Docker image** to ensure portability and consistency across environments.
+    - Use the existing Node.js application (`npm start`) as the entry point in the Docker container.
+    - Store the Docker image in a container registry (e.g., Amazon Elastic Container Registry, ECR).
 
 2. **Horizontal Scaling with ECS**:
-   - Deploy the Docker containers to **Amazon ECS (Elastic Container Service)** with Fargate as the serverless compute option or EC2 for more control over scaling.
-   - Configure **auto-scaling** policies in ECS to dynamically adjust the number of container instances based on CPU or memory usage, or based on the number of incoming requests.
+    - Deploy the Docker containers to **Amazon ECS (Elastic Container Service)** with Fargate as the serverless compute
+      option or EC2 for more control over scaling.
+    - Configure **auto-scaling** policies in ECS to dynamically adjust the number of container instances based on CPU or
+      memory usage, or based on the number of incoming requests.
 
 3. **Others**:
-   - Use **Amazon SQS** or **Amazon Kinesis** to decouple the processing of incoming requests:
-      - Queue incoming requests in SQS, allowing the backend to process them asynchronously.
-      - For real-time streaming analytics, use Kinesis to capture and process data at scale.
-     
+    - Use **Amazon SQS** or **Amazon Kinesis** to decouple the processing of incoming requests:
+        - Queue incoming requests in SQS, allowing the backend to process them asynchronously.
+        - For real-time streaming analytics, use Kinesis to capture and process data at scale.
+
 ## Future Improvements
 
 1. **Enhance OpenAPI Documentation**:
-   - Fully document all endpoints, including request/response examples, error codes, and authentication details.
+    - Fully document all endpoints, including request/response examples, error codes, and authentication details.
 2. **Improve Test Coverage**:
-   - Add unit and integration tests for all APIs, services, and utilities.
-   - Include tests for JWT authentication, DynamoDB access, and parameter validation.
+    - Add unit and integration tests for all APIs, services, and utilities.
+    - Include tests for JWT authentication, DynamoDB access, and parameter validation.
 3. **Integrate CI/CD Pipelines**:
-   - Automate deployment of application and CDK resources using AWS CodePipeline or GitHub Actions.
+    - Automate deployment of application and CDK resources using AWS CodePipeline or GitHub Actions.
 4. **Optimize DynamoDB Partitioning**:
-   - Experiment with more efficient partitioning strategies to reduce query complexity and improve performance.
+    - Experiment with more efficient partitioning strategies to reduce query complexity and improve performance.
 5. **Explore Data Analysis Tools**:
-   - Use AWS Glue or Redshift for analytics to overcome DynamoDB's limitations in aggregation and time-series analysis.
+    - Use AWS Glue or Redshift for analytics to overcome DynamoDB's limitations in aggregation and time-series analysis.
 
 
 
