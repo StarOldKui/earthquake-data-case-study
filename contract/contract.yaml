@@ -1,0 +1,297 @@
+openapi: 3.0.0
+info:
+  title: Earthquake Data Backend API
+  description: This API serves as the backend for the Earthquake Data Case Study.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: staroldkui@gmail.com
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+
+paths:
+  /earthquakes-data:
+    get:
+      summary: List earthquakes with pagination and filtering
+      description: |
+        Retrieve a list of earthquakes from the database. This endpoint supports pagination, sorting, and filtering based on parameters such as time range, location, and magnitude.
+      security:
+        - bearerAuth: [ ] # Requires JWT for authentication
+      parameters:
+        - name: pageSize
+          in: query
+          description: >
+            Number of records to return per page. Default is 10. The value must be a positive integer and no more than 100.
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          example: 10
+        - name: sort
+          in: query
+          description: >
+            The field by which results should be sorted. Allowed values are 'occurrenceTimestamp' or 'magnitude'.
+          required: true
+          schema:
+            type: string
+            enum: [ occurrenceTimestamp, magnitude ]
+          example: "occurrenceTimestamp"
+        - name: sortOrder
+          in: query
+          description: >
+            The order of sorting: 'asc' for ascending
+            or 'desc' for descending.
+          required: true
+          schema:
+            type: string
+            enum: [ asc, desc ]
+          example: "desc"
+        - name: occurStartDate
+          in: query
+          description: >
+            Return only earthquakes that occurred after this date.
+            The date must be in the format 'YYYY-MM-DD' (e.g., 2025-01-01).
+          required: false
+          schema:
+            type: string
+            format: date
+          example: "2025-01-01"
+        - name: occurEndDate
+          in: query
+          description: >
+            Return only earthquakes that occurred before this date.
+            The date must be in the format 'YYYY-MM-DD' (e.g., 2025-01-31).
+          required: false
+          schema:
+            type: string
+            format: date
+          example: "2025-01-31"
+        - name: location
+          in: query
+          description: Return only earthquakes that occurred in locations containing this keyword (case-insensitive).
+          required: false
+          schema:
+            type: string
+        - name: minMagnitude
+          in: query
+          description: The minimum magnitude of earthquakes to include in the results. Must be a non-negative value.
+          required: false
+          schema:
+            type: number
+            minimum: 0
+          example: 4.0
+        - name: maxMagnitude
+          in: query
+          description: The maximum magnitude of earthquakes to include in the results. Must be a non-negative value.
+          required: false
+          schema:
+            type: number
+            minimum: 0
+          example: 6.0
+      responses:
+        '200':
+          description: Successful response with a list of earthquake data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Earthquake data retrieved successfully."
+                  data:
+                    $ref: '#/components/schemas/EarthquakeResponse'
+        '400':
+          description: Invalid query parameters.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid query parameters."
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          example: "field"
+                        msg:
+                          type: string
+                          example: "Invalid value"
+                        path:
+                          type: string
+                          example: "pageSize"
+                        location:
+                          type: string
+                          example: "query"
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal server error."
+  /earthquakes-data/statistic/api-request-count:
+    get:
+      summary: Get API request statistics by day
+      description: |
+        Retrieve statistics about API requests grouped by date for a specific day.
+        This endpoint provides insight into API usage patterns, such as the number
+        of requests made to various endpoints on the specified date.
+      security:
+        - bearerAuth: [ ] # Requires JWT for authentication
+      parameters:
+        - name: reqDate
+          in: query
+          description: The date for which to retrieve API request statistics. The date must be in the format 'YYYY-MM-DD'.
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2025-01-01"
+      responses:
+        '200':
+          description: Successful response with API request statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              examples:
+                success:
+                  value:
+                    status: 200
+                    success: true
+                    message: "API request statistics retrieved successfully."
+                    data:
+                      "2025-01-01":
+                        "/endpoint-1": 10
+                        "/endpoint-2": 5
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              examples:
+                invalid_params:
+                  value:
+                    status: 400
+                    success: false
+                    message: "Invalid query parameters."
+                    data:
+                      - type: "field"
+                        msg: "reqDate must be a valid date."
+                        path: "reqDate"
+                        location: "query"
+        '403':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              examples:
+                unauthorized:
+                  value:
+                    status: 403
+                    success: false
+                    message: "Invalid or expired token."
+                    data: null
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              examples:
+                server_error:
+                  value:
+                    status: 500
+                    success: false
+                    message: "Internal server error."
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT # Indicates that the token is in JWT format
+  schemas:
+    APIResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/EarthquakeResponse' # Earthquake-specific response
+            - type: array
+              items:
+                type: object
+            - type: object
+    EarthquakeResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          description: A list of earthquake records.
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: Unique identifier for the earthquake event.
+                example: "us7000dflq"
+              occurrenceTimestamp:
+                type: integer
+                description: The timestamp (in milliseconds) when the earthquake occurred.
+                example: 1670000000000
+              magnitude:
+                type: number
+                description: The magnitude of the earthquake.
+                example: 5.2
+              location:
+                type: string
+                description: The location where the earthquake occurred.
+                example: "California, USA"
+        size:
+          type: integer
+          description: The number of earthquake records returned.
+          example: 10
+        lastEvaluatedKey:
+          type: object
+          description: The key to use for fetching the next page of results, if applicable.
+          properties:
+            id:
+              type: string
+              description: The unique identifier for the last item in the current page.
+              example: "us7000dflq"
