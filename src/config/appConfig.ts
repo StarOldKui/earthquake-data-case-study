@@ -4,6 +4,11 @@
  * throughout the project and provides a single source of truth.
  */
 export const AppConfig = {
+  JWT: {
+    Secret: process.env.JWT_SECRET || "demo-secret-key-for-testing-only",
+    ExpiresIn: "1h",
+    RefreshTokenExpiresIn: "7d",
+  },
   AWS: {
     Region: process.env.AWS_REGION || "ap-southeast-2", // Default AWS region
     DynamoDB: {

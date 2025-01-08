@@ -3,6 +3,7 @@ import { RequestMetadataCollectHandler } from "./handlers/RequestMetadataCollect
 import earthquakeDataRoutes from "./routes/EarthquakeDataRoutes";
 import earthquakeDataStatisticsRoutes from "./routes/EarthquakeDataStatisticsRoutes";
 import { ErrorHandler } from "./handlers/ErrorHandler";
+import authRoutes from "./routes/AuthRoutes";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -15,6 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(RequestMetadataCollectHandler.logMetadata);
 
 // Register all endpoints
+app.use("/auth", authRoutes);
 app.use("/earthquakes-data", earthquakeDataRoutes);
 app.use("/earthquakes-data/statistic", earthquakeDataStatisticsRoutes);
 
