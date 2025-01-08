@@ -96,10 +96,7 @@ export class RequestMetadataCollectHandler {
 
     // Record timestamps
     const reqTimestamp = Date.now(); // The time the request was received
-    const reqReadableTimestampUTC = new Date(reqTimestamp).toISOString(); // Human-readable time in UTC
-    const reqReadableTimestampLocal = moment
-      .tz(reqTimestamp, "Australia/Melbourne")
-      .format("YYYY-MM-DD HH:mm:ss z"); // Human-readable time in local timezone
+    const reqDate = new Date(reqTimestamp).toISOString().split("T")[0]; // Generate date in YYYY-MM-DD format
 
     // Set the partition key to the original URL (endpoint name)
     const endpointName = req.path;
@@ -108,8 +105,7 @@ export class RequestMetadataCollectHandler {
       endpointName, // Partition Key: Original URL path of the endpoint
       reqTimestamp, // Sort Key: UNIX timestamp in milliseconds
       reqId,
-      reqReadableTimestampUTC, // UTC time
-      reqReadableTimestampLocal, // Local time (specific timezone)
+      reqDate,
       reqIp, // The IP address from which the request originated
       reqGeoLocation, // Geo-location info
       reqPath: req.originalUrl, // The original URL path of the request

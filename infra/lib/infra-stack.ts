@@ -1,6 +1,11 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { AttributeType, BillingMode, Table } from "aws-cdk-lib/aws-dynamodb";
+import {
+  AttributeType,
+  BillingMode,
+  ProjectionType,
+  Table,
+} from "aws-cdk-lib/aws-dynamodb";
 
 /**
  * Infrastructure stack for provisioning AWS resources.
@@ -66,5 +71,18 @@ export class InfraStack extends cdk.Stack {
         removalPolicy: cdk.RemovalPolicy.DESTROY,
       },
     );
+
+    earthquakeAPIRequestLogTable.addGlobalSecondaryIndex({
+      indexName: "ReqDateIndex", // Name of the GSI for querying logs by date
+      partitionKey: {
+        name: "reqDate", // Partition Key: The date of the request in "YYYY-MM-DD" format
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: "reqTimestamp",
+        type: AttributeType.NUMBER,
+      },
+      projectionType: ProjectionType.ALL,
+    });
   }
 }
